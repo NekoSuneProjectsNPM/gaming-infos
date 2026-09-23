@@ -17,12 +17,12 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/NekoSuneProjects/gaming-infos.git"
+        "url": "https://github.com/NekoSuneProjectsNPM/gaming-infos.git"
     },
     "bugs": {
-        "url": "https://github.com/NekoSuneProjects/gaming-infos/issues"
+        "url": "https://github.com/NekoSuneProjectsNPM/gaming-infos/issues"
     },
-    "funding": "https://github.com/NekoSuneProjects/gaming-infos?sponsor",
+    "funding": "https://github.com/NekoSuneProjectsNPM/gaming-infos?sponsor",
     "keywords": [
         "gaming", "infos", "pagination", "game-codes", "redeem-codes", "creator-codes",
         "vrchat", "genshin-impact", "wuthering-waves", "warframe", "fortnite",
