@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Added `@nekosuneprojects/vrchat-api@1.0.1` as the second modular provider alongside Warframe.
+- Added `createVRChat()` / `createClient('vrchat')` with bundled VRChat JSON lookups, online world search and browsing, group search, and external avatar search.
+- Extended provider smoke tests and documentation for VRChat.
+
 ### Changed
 - Started the 3.0.0 major-version modular rebuild.
 - Removed legacy multi-game JSON cache, scripts and synchronisation workflows.

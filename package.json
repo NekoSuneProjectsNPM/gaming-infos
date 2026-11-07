@@ -1,7 +1,7 @@
 {
   "name": "@nekosuneprojects/gaming-infos",
   "version": "3.0.0",
-  "description": "Modular multi-game information SDK. Rebuilt from scratch with an independent Warframe provider powered by @nekosuneprojects/warframe-api.",
+  "description": "Modular multi-game information SDK using independently versioned Warframe and VRChat providers.",
   "main": "index.js",
   "type": "commonjs",
   "engines": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check index.js && node --check src/registry.js && node --check src/providers/warframe.js",
+    "check": "node --check index.js && node --check src/registry.js && node --check src/providers/warframe.js && node --check src/providers/vrchat.js",
     "prepack": "npm run check && npm test"
   },
   "repository": {
@@ -27,12 +27,19 @@
     "warframe",
     "warframe-api",
     "worldstate",
-    "redeem-codes"
+    "redeem-codes",
+    "vrchat",
+    "vrchat-api",
+    "worlds",
+    "groups",
+    "avatars",
+    "avatar-search"
   ],
   "author": "NekoSuneVR",
   "license": "MIT",
   "dependencies": {
-    "@nekosuneprojects/warframe-api": "1.0.1"
+    "@nekosuneprojects/warframe-api": "1.0.1",
+    "@nekosuneprojects/vrchat-api": "1.0.1"
   },
   "files": [
     "index.js",
