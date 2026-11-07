@@ -1,6 +1,6 @@
 {
   "name": "@nekosuneprojects/gaming-infos",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Modular multi-game information SDK using independently versioned Warframe and VRChat providers.",
   "main": "index.js",
   "type": "commonjs",

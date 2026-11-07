@@ -1,6 +1,6 @@
 # @nekosuneprojects/gaming-infos
 
-Modular multi-game information toolkit for Node.js 18+. **Version 3.0.0 is a clean-break rebuild** of the old monolithic data-mirror package, using independent npm packages for each game. The previous embedded datasets, API cache syncs and legacy add-on implementation have been removed.
+Modular multi-game information toolkit for Node.js 18+. **Version 3.0.1 continues the clean-break 3.x rebuild** of the old monolithic data-mirror package, using independent npm packages for each game. The previous embedded datasets, API cache syncs and legacy add-on implementation have been removed.
 
 The rebuilt package now includes **Warframe and VRChat**, backed by `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.1` respectively. Additional games can be added later without reintroducing the old monolithic cache.
 
@@ -99,4 +99,4 @@ The 2.x `gaming-infos` API-first caches, embedded JSON catalogs, `gamecodes`, an
 
 ## Publishing
 
-The source version remains `3.0.0` until deliberately bumped for the next release. Before publishing, confirm both exact dependency versions exist on npmjs.org, run `npm ci`, `npm run check`, `npm test`, and `npm pack --dry-run`. The release-triggered workflows publish only for a matching `v<package-version>` release. No package is published merely by merging to `main`.
+The source version is `3.0.1`; package publication is manual through GitHub Actions. Before publishing, confirm both exact dependency versions exist on npmjs.org, run `npm ci`, `npm run check`, `npm test`, and `npm pack --dry-run`. The consolidated `Build and publish gaming-infos` workflow runs build/tests on main pushes and pull requests. To publish, use **Run workflow** on `main` and select `registry=both`, `npmjs`, or `github`. For npmjs select `npm_auth=token` (requires secret `npm_token`) or `npm_auth=trusted` (requires a Trusted Publisher configured for repository `NekoSuneProjectsNPM/gaming-infos`, workflow `build-publish.yml`). Publishing is never triggered by an ordinary push. GitHub Packages uses the `@nekosuneprojectsnpm/gaming-infos` scope.

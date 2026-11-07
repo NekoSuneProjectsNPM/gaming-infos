@@ -1,0 +1,142 @@
+name: Build and publish gaming-infos
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: "Choose which package registry to publish to"
+        type: choice
+        required: true
+        default: both
+        options: [both, npmjs, github]
+      npm_auth:
+        description: "npmjs authentication method"
+        type: choice
+        required: true
+        default: token
+        options: [token, trusted]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gaming-infos-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org/
+      - name: Validate release version and dependency lock
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const p = require('./package.json');
+          const lock = require('./package-lock.json');
+          if (p.name !== '@nekosuneprojects/gaming-infos') throw Error('Unexpected package');
+          if (!/^\d+\.\d+\.\d+$/.test(p.version)) throw Error('Stable semver required');
+          if (lock.name !== p.name || lock.version !== p.version ||
+              lock.packages?.['']?.version !== p.version) throw Error('Version mismatch');
+          for (const [dep, version] of Object.entries(p.dependencies || {})) {
+            if (lock.packages[''].dependencies[dep] !== version ||
+                lock.packages['node_modules/' + dep]?.version !== version)
+              throw Error('Lockfile mismatch: ' + dep);
+          }
+          NODE
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Static checks
+        run: npm run check
+      - name: Unit tests
+        run: npm test
+      - name: Check publish package
+        run: npm pack --dry-run --ignore-scripts
+
+  npmjs:
+    if: github.event_name == 'workflow_dispatch' && (inputs.registry == 'both' || inputs.registry == 'npmjs')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org/
+      - name: Ensure npm Trusted Publishing CLI support
+        run: npm install --global npm@^11.5.1
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Publish exact version to npmjs
+        shell: bash
+        env:
+          NPM_AUTH_METHOD: ${{ inputs.npm_auth }}
+          NPM_TOKEN: ${{ secrets.npm_token }}
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "${NAME}@${VERSION}" version --registry=https://registry.npmjs.org/ --prefer-online >/dev/null 2>&1; then
+            echo "::error::${NAME}@${VERSION} is already published on npmjs. Bump package version before the next publication."
+            exit 1
+          fi
+          if [ "$NPM_AUTH_METHOD" = "trusted" ]; then
+            unset NODE_AUTH_TOKEN NPM_TOKEN
+            npm publish --access public --registry=https://registry.npmjs.org/
+          else
+            if [ -z "$NPM_TOKEN" ]; then
+              echo "::error::Configure the npm_token repository secret or choose trusted after setting up the npm Trusted Publisher."
+              exit 1
+            fi
+            export NODE_AUTH_TOKEN="$NPM_TOKEN"
+            npm publish --access public --registry=https://registry.npmjs.org/
+          fi
+
+  github-packages:
+    if: github.event_name == 'workflow_dispatch' && (inputs.registry == 'both' || inputs.registry == 'github')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://npm.pkg.github.com/
+          scope: '@nekosuneprojectsnpm'
+      - name: Install npmjs dependencies
+        run: npm ci --ignore-scripts --registry=https://registry.npmjs.org/
+      - name: Switch package scope for GitHub Packages only
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const p = require('./package.json');
+          if (p.name !== '@nekosuneprojects/gaming-infos') throw Error('Unexpected package name');
+          p.name = '@nekosuneprojectsnpm/gaming-infos';
+          p.publishConfig = { ...p.publishConfig, registry:'https://npm.pkg.github.com/' };
+          fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
+          NODE
+      - name: Publish to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish --ignore-scripts --registry=https://npm.pkg.github.com/

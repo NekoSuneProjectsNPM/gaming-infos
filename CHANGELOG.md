@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 3.0.1 - 2026-11-07
+
+### Added
+- Integrated `@nekosuneprojects/vrchat-api@1.0.1` as the second independent game provider alongside Warframe.
+- Added `createVRChat()` and `createClient('vrchat')` for local VRChat JSON, worlds search/browse, groups search and avatar provider searches.
+- Added GitHub Actions validation, Node.js checks, unit tests and package packing on main pushes and pull requests.
+- Added manual npmjs and GitHub Packages publishing with selectable registries and npm token/Trusted Publisher authentication.
+
+### Changed
+- Bumped the gaming-infos package version from `3.0.0` to `3.0.1` for the next release.
+- Consolidated publishing into one workflow, removing duplicate release-triggered publish workflows.
+- Retained `@nekosuneprojects/warframe-api@1.0.1` and exact package dependency locking.
+
+
 ### Added
 - Added `@nekosuneprojects/vrchat-api@1.0.1` as the second modular provider alongside Warframe.
 - Added `createVRChat()` / `createClient('vrchat')` with bundled VRChat JSON lookups, online world search and browsing, group search, and external avatar search.
