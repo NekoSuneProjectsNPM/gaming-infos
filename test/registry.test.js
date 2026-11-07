@@ -3,10 +3,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const gaming = require('../index');
 
-test('Warframe and VRChat are the installed game providers', () => {
-  assert.deepEqual(gaming.listProviders(), ['warframe', 'vrchat']);
+test('Warframe, VRChat and Genshin Impact are installed game providers', () => {
+  assert.deepEqual(gaming.listProviders(), ['warframe', 'vrchat', 'genshinimpact']);
   assert.equal(gaming.providers.warframe.id, 'warframe');
   assert.equal(gaming.providers.vrchat.id, 'vrchat');
+  assert.equal(gaming.providers.genshinimpact.id, 'genshinimpact');
 });
 
 test('unknown games are rejected explicitly', () => {
@@ -40,4 +41,31 @@ test('VRChat delegates to its standalone package with JSON and online methods', 
   const results = await vrchat.worlds.search('Black Cat');
   assert.ok(results.total > 0);
   assert.equal(typeof gaming.createClient('VRCHAT').worlds.browse, 'function');
+});
+
+test('Genshin Impact uses standalone npm package for local characters and redeem codes', async () => {
+  const genshin = gaming.createGenshinImpact({fetchImpl: async () => {
+    throw Error('Network access should not be used for bundled JSON');
+  }});
+  assert.equal(typeof genshin.About, 'function');
+  assert.equal(typeof genshin.character, 'function');
+  assert.equal(typeof genshin.characters.list, 'function');
+  assert.equal(typeof genshin.codes.snapshot, 'function');
+  assert.equal(typeof genshin.enka.player, 'function');
+
+  const about = await genshin.About();
+  assert.equal(about.name, 'Genshin Impact');
+  const amber = await genshin.character('amber');
+  assert.equal(amber.name, 'Amber');
+
+  const codes = await genshin.codes.snapshot();
+  assert.ok(Array.isArray(codes.Active));
+  assert.ok(Array.isArray(codes.Expired));
+  assert.ok(Array.isArray(codes.Unknown));
+  assert.equal(typeof gaming.createClient('GENSHINIMPACT').enka.player, 'function');
+});
+
+test('Genshin Impact provider rejects invalid options', () => {
+  assert.throws(() => gaming.createGenshinImpact(null), TypeError);
+  assert.throws(() => gaming.createGenshinImpact([]), TypeError);
 });

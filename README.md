@@ -1,8 +1,8 @@
 # @nekosuneprojects/gaming-infos
 
-Modular multi-game information toolkit for Node.js 18+. **Version 3.0.1 continues the clean-break 3.x rebuild** of the old monolithic data-mirror package, using independent npm packages for each game. The previous embedded datasets, API cache syncs and legacy add-on implementation have been removed.
+Modular multi-game information toolkit for Node.js 18+. **Version 3.0.2 continues the clean-break 3.x rebuild** of the old monolithic data-mirror package, using independent npm packages for each game. The previous embedded datasets, API cache syncs and legacy add-on implementation have been removed.
 
-The rebuilt package now includes **Warframe and VRChat**, backed by `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.0` respectively. Additional games can be added later without reintroducing the old monolithic cache.
+The rebuilt package now includes **Warframe, VRChat and Genshin Impact**, backed by `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.0`, plus `@nekosuneprojects/genshinimpact-api@1.0.0`. Additional games can be added later without reintroducing the old monolithic cache.
 
 ## Installation
 
@@ -15,6 +15,7 @@ To use an individual game package directly:
 ```bash
 npm install @nekosuneprojects/warframe-api@1.0.1
 npm install @nekosuneprojects/vrchat-api@1.0.0
+npm install @nekosuneprojects/genshinimpact-api@1.0.0
 ```
 
 Node.js 18+ is required. Pushes to `main` run build/tests and attempt to publish the package to npmjs and GitHub Packages when the exact version is not already available. Pull requests build/test only.
@@ -70,15 +71,39 @@ const page2 = await vrchat.worlds.browse({sort:'updated',page:2});
 console.log(page2.data, page2.meta);
 ```
 
+## Genshin Impact
+
+The Genshin provider is an adapter for the standalone `@nekosuneprojects/genshinimpact-api@1.0.0` package. It keeps local JSON and redemption-code data separate from optional live Enka.Network requests.
+
+```js
+const gaming = require('@nekosuneprojects/gaming-infos');
+const gi = gaming.createGenshinImpact();
+
+// All of these work from bundled local JSON:
+const about = await gi.About();
+const amber = await gi.character('amber');
+const characters = await gi.characters.list();
+const archivedCodes = await gi.codes.snapshot();
+const unknownCodes = await gi.codes.unknown();
+console.log(about.name, amber.name, characters.length, archivedCodes.Expired.length);
+
+// Optional Enka.Network UID showcase (live request only when called):
+const uid = '123456789'; // Replace with a real UID
+const profile = await gi.enka.player(uid);
+console.log(profile.playerInfo.nickname);
+```
+
+Use `gaming.createClient('genshinimpact')` as an equivalent way to create a client. The local code archive has historical `Active`, `Expired` and `Unknown` categories; these are not real-time redemption guarantees. Enka is a third-party public profile service and obeys its rate limits. See [Genshin Impact API](https://www.npmjs.com/package/@nekosuneprojects/genshinimpact-api) for the standalone documentation.
+
 ## Module layout
 
 - `index.js` — public entrypoint
 - `src/registry.js` — provider registry and selection
 - `src/providers/warframe.js` — Warframe npm adapter
 - `src/providers/vrchat.js` — VRChat npm adapter
+- `src/providers/genshinimpact.js` — Genshin Impact npm adapter
 - `test/registry.test.js` — provider smoke tests
-- `.github/workflows/npm-publish.yml` — npmjs release publishing
-- `.github/workflows/npm-publish-github-packages.yml` — GitHub Packages release publishing
+- `.github/workflows/build-publish.yml` — CI checks and publishing after merges to main
 
 ## API surface
 
@@ -87,11 +112,13 @@ console.log(page2.data, page2.meta);
 | `createClient(game, options)` | Instantiate the game provider |
 | `createWarframe(options)` | Shortcut to the Warframe provider |
 | `createVRChat(options)` | Shortcut to the VRChat provider |
+| `createGenshinImpact(options)` | Shortcut to the Genshin Impact provider |
 | `listProviders()` | List installed game IDs |
 | `providers.warframe` | Warframe provider adapter |
 | `providers.vrchat` | VRChat provider adapter |
+| `providers.genshinimpact` | Genshin Impact provider adapter |
 
-Read the standalone packages' documentation for complete features: [Warframe API](https://www.npmjs.com/package/@nekosuneprojects/warframe-api) and [VRChat API](https://www.npmjs.com/package/@nekosuneprojects/vrchat-api).
+Read the standalone packages' documentation for complete features: [Warframe API](https://www.npmjs.com/package/@nekosuneprojects/warframe-api) [VRChat API](https://www.npmjs.com/package/@nekosuneprojects/vrchat-api), and [Genshin Impact API](https://www.npmjs.com/package/@nekosuneprojects/genshinimpact-api).
 
 ## Migration from 2.x
 
@@ -99,4 +126,4 @@ The 2.x `gaming-infos` API-first caches, embedded JSON catalogs, `gamecodes`, an
 
 ## Publishing
 
-The source version is `3.0.1`; package publication is manual through GitHub Actions. Before publishing, confirm both exact dependency versions exist on npmjs.org, run `npm ci`, `npm run check`, `npm test`, and `npm pack --dry-run`. The consolidated `Build and publish gaming-infos` workflow builds/tests on every `main` push and pull request. After a successful build on `main`, it also attempts **both** registry publications, skipping any version already published. The manual **Run workflow** action still supports `registry=both`, `npmjs`, or `github`. On automatic pushes, npmjs uses **Trusted Publisher OIDC only**, not the existing `npm_token` (which caused EOTP). Configure npm's Trusted Publisher for the exact `NekoSuneProjectsNPM/gaming-infos` repository and `build-publish.yml` workflow, and enable direct `npm publish`. Manual dispatch still permits a token if it is eligible to publish without an interactive OTP (which must be configured for repository `NekoSuneProjectsNPM/gaming-infos`, workflow `build-publish.yml`). Manual dispatch uses the selected `npm_auth` setting. GitHub Packages publishes as `@nekosuneprojectsnpm/gaming-infos`. Each new npm release still requires incrementing the package version in both package files.
+This PR prepares source version `3.0.2`. Creating this branch and pull request does not publish it; after review and merge into `main`, the configured build workflow attempts publication only if the exact version has not already been published. Before publishing, confirm both exact dependency versions exist on npmjs.org, run `npm ci`, `npm run check`, `npm test`, and `npm pack --dry-run`. The consolidated `Build and publish gaming-infos` workflow builds/tests on every `main` push and pull request. After a successful build on `main`, it also attempts **both** registry publications, skipping any version already published. The manual **Run workflow** action still supports `registry=both`, `npmjs`, or `github`. On automatic pushes, npmjs uses **Trusted Publisher OIDC only**, not the existing `npm_token` (which caused EOTP). Configure npm's Trusted Publisher for the exact `NekoSuneProjectsNPM/gaming-infos` repository and `build-publish.yml` workflow, and enable direct `npm publish`. Manual dispatch still permits a token if it is eligible to publish without an interactive OTP (which must be configured for repository `NekoSuneProjectsNPM/gaming-infos`, workflow `build-publish.yml`). Manual dispatch uses the selected `npm_auth` setting. GitHub Packages publishes as `@nekosuneprojectsnpm/gaming-infos`. Each new npm release still requires incrementing the package version in both package files.

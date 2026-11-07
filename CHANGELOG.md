@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Prepared `3.0.2` with the third modular provider: `@nekosuneprojects/genshinimpact-api@1.0.0`.
+- Added `createGenshinImpact(options)`, `createClient('genshinimpact')` and `providers.genshinimpact`.
+- Added bundled Genshin character/game data, redeem-code archive, and optional Enka.Network UID profile integration through the standalone adapter.
+- Expanded provider tests and README documentation.
+
+### Changed
+- Bumped `gaming-infos` source version from `3.0.1` to `3.0.2` for the next publishable release; this feature branch is intentionally not merged or published.
+
+
 ### Fixed
 - Fixed npmjs publishing from automatic GitHub Actions runs to use Trusted Publisher OIDC instead of selecting an npm token that was rejected with `EOTP` (interactive two-factor authentication required).
 - Clarified the required npmjs Trusted Publisher configuration for `NekoSuneProjectsNPM/gaming-infos` and workflow `build-publish.yml`.
