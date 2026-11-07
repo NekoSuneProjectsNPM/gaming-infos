@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- Expanded PR #1 to **eight standalone providers** (Warframe, VRChat, Genshin Impact, Honkai: Star Rail, Zenless Zone Zero, Arknights: Endfield, Neverness to Everness, Wuthering Waves).
+- Added exact `1.0.0` dependencies for `honkaistarrail-api`, `zenlesszonezero-api`, `arknightsendfield-api`, `nte-api` and `wutheringwaves-api`, alongside `genshinimpact-api`.
+- Added provider adapters, new factory exports, provider discovery, local-data smoke tests and documentation. Public Enka.Network helpers remain available through applicable standalone providers.
 - Prepared `3.0.2` with the third modular provider: `@nekosuneprojects/genshinimpact-api@1.0.0`.
 - Added `createGenshinImpact(options)`, `createClient('genshinimpact')` and `providers.genshinimpact`.
 - Added bundled Genshin character/game data, redeem-code archive, and optional Enka.Network UID profile integration through the standalone adapter.

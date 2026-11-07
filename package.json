@@ -1,7 +1,7 @@
 {
   "name": "@nekosuneprojects/gaming-infos",
   "version": "3.0.2",
-  "description": "Modular multi-game information SDK with independent Warframe, VRChat and Genshin Impact providers.",
+  "description": "Modular multi-game information SDK with eight independent Warframe, VRChat, HoYoverse, Endfield, NTE and Wuthering Waves providers.",
   "main": "index.js",
   "type": "commonjs",
   "engines": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check index.js && node --check src/registry.js && node --check src/providers/warframe.js && node --check src/providers/vrchat.js && node --check src/providers/genshinimpact.js",
+    "check": "node --check index.js && node --check src/registry.js && node --check src/providers/warframe.js && node --check src/providers/vrchat.js && node --check src/providers/genshinimpact.js && node --check src/providers/honkaistarrail.js && node --check src/providers/zenlesszonezero.js && node --check src/providers/arknightsendfield.js && node --check src/providers/nte.js && node --check src/providers/wutheringwaves.js",
     "prepack": "npm run check && npm test"
   },
   "repository": {
@@ -37,14 +37,29 @@
     "genshin-impact",
     "genshinimpact-api",
     "enka-network",
-    "genshin-codes"
+    "genshin-codes",
+    "honkaistarrail",
+    "honkaistarrail-api",
+    "zenlesszonezero",
+    "zenlesszonezero-api",
+    "arknightsendfield",
+    "arknightsendfield-api",
+    "nte",
+    "nte-api",
+    "wutheringwaves",
+    "wutheringwaves-api"
   ],
   "author": "NekoSuneVR",
   "license": "MIT",
   "dependencies": {
     "@nekosuneprojects/warframe-api": "1.0.1",
     "@nekosuneprojects/vrchat-api": "1.0.0",
-    "@nekosuneprojects/genshinimpact-api": "1.0.0"
+    "@nekosuneprojects/genshinimpact-api": "1.0.0",
+    "@nekosuneprojects/honkaistarrail-api": "1.0.0",
+    "@nekosuneprojects/zenlesszonezero-api": "1.0.0",
+    "@nekosuneprojects/arknightsendfield-api": "1.0.0",
+    "@nekosuneprojects/nte-api": "1.0.0",
+    "@nekosuneprojects/wutheringwaves-api": "1.0.0"
   },
   "files": [
     "index.js",
