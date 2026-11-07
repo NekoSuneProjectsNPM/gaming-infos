@@ -1,23 +1,34 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented here.
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [Unreleased] — planned 3.0.2 (PR #1, draft)
 
-## Unreleased
+### Added
+- Integrated six **exact-version** standalone game APIs: `@nekosuneprojects/genshinimpact-api@1.0.0`, `@nekosuneprojects/honkaistarrail-api@1.0.0`, `@nekosuneprojects/zenlesszonezero-api@1.0.0`, `@nekosuneprojects/arknightsendfield-api@1.0.0`, `@nekosuneprojects/nte-api@1.0.0`, and `@nekosuneprojects/wutheringwaves-api@1.0.0`.
+- Expanded the provider registry to **eight games**, preserving `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.0`.
+- Added five adapters under `src/providers/` alongside the Genshin Impact adapter, and exports for `createGenshinImpact()`, `createHonkaiStarRail()`, `createZenlessZoneZero()`, `createArknightsEndfield()`, `createNTE()` and `createWutheringWaves()`.
+- Added support for all six game IDs through `createClient(id, options)`, `listProviders()` and the frozen `providers` registry.
+- Added smoke tests for game metadata, local character lookups and code archives, plus optional Enka.Network helper availability for Genshin Impact, Honkai: Star Rail, Zenless Zone Zero and Arknights: Endfield.
+- Expanded README with an eight-provider compatibility matrix, examples for every game, offline/live API boundaries, redemption-code cautions, migration notes and release guidance.
+
+### Changed
+- Prepared `@nekosuneprojects/gaming-infos@3.0.2` in `package.json` and `package-lock.json`; **no release has been published by PR #1**.
+- Kept each game's bundled JSON, manual synchronization and provider-specific APIs within its **separate npm package**, rather than reintroducing a shared monolithic data mirror.
+- Extended `npm run check` to syntax-check every provider adapter and both entrypoints.
+- Updated the npmjs publishing workflow to use **Trusted Publisher OIDC** on automatic main-branch builds while retaining manual registry selection and GitHub Packages support.
 
 ### Fixed
-- Fixed npmjs publishing from automatic GitHub Actions runs to use Trusted Publisher OIDC instead of selecting an npm token that was rejected with `EOTP` (interactive two-factor authentication required).
-- Clarified the required npmjs Trusted Publisher configuration for `NekoSuneProjectsNPM/gaming-infos` and workflow `build-publish.yml`.
+- Corrected the npmjs automatic publishing path that previously attempted a token rejected with `EOTP`; the publish job now uses OIDC for main pushes.
+- Updated publish-job conditions so successful main builds can attempt releases, while pull requests run build/test only.
+- Added exact-version checks to avoid republishing immutable package versions.
+- Corrected the VRChat dependency reference to the published `@nekosuneprojects/vrchat-api@1.0.0` version rather than an unavailable `1.0.1` tarball.
 
-### Fixed
-- Corrected the publishing workflow so successful `main` push builds can publish to npmjs and GitHub Packages; previously both registry jobs were skipped because they required `workflow_dispatch`.
-- Added a published-version check to skip existing versions instead of reattempting immutable releases.
-- Preserved manual registry selection and npm token/Trusted Publisher authentication.
-
-### Fixed
-- Fixed npm installation error E404 by aligning the VRChat dependency and lockfile with the published `@nekosuneprojects/vrchat-api@1.0.0` release. The unreleased `1.0.1` tarball was previously referenced incorrectly.
+### Validation and release notes
+- PR #1 GitHub Actions build passed `npm ci --ignore-scripts`, `npm run check`, `npm test` and `npm pack --dry-run --ignore-scripts`.
+- **Draft PR only:** do not merge or publish without explicit approval. Confirm lockfile reproducibility and npm registry publishing configuration before release.
+- Code labels such as `Active` are based on upstream historical/community snapshots, not guaranteed real-time redemption; Enka.Network lookups are opt-in.
 
 ## 3.0.1 - 2026-11-07
 
