@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Started the 3.0.0 major-version modular rebuild.
+- Removed legacy multi-game JSON cache, scripts and synchronisation workflows.
+- Added the standalone `@nekosuneprojects/warframe-api@1.0.1` dependency as the first provider.
+- Preserved package publishing workflows and switched them to GitHub-hosted runners.
+
+## 3.0.0 - Unreleased
+
+### Breaking changes
+- Replaced the 2.x monolithic API and bundled game data with a small modular provider registry. Only Warframe is included initially.
+- Old `gamecodes`, data mirrors and cache sync commands were removed.
+
 ## 2.4.0 - 2026-08-24
 
 ### Added

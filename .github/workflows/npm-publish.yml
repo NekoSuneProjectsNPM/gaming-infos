@@ -1,71 +1,31 @@
-name: Node.js Package NPMJS
+name: Publish gaming-infos to npmjs
 
 on:
   release:
-    types: 
-      - published
+    types: [published]
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  packages: write
+  contents: read
+  id-token: write
 
 jobs:
-  release:
-    runs-on: [self-hosted, Linux, docker, buildx]
+  npmjs:
+    runs-on: ubuntu-latest
     steps:
-      # Checkout project repository
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # Setup Node.js environment
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org/'
-
-      # Read current package version
-      - name: Read version from package.json
-        id: read_version
+          registry-url: https://registry.npmjs.org/
+      - name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      # Publish version to npm
-      - name: Publish to npm
-        run: npm publish --access public
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$RELEASE_TAG" = "v$VERSION" || { echo "::error::Release tag and package version disagree"; exit 1; }
+      - run: npm ci
+      - run: npm run check && npm test
+      - name: Publish npmjs
         env:
           NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
-
-      # Read the release notes from the already-versioned changelog.
-      - id: get_changelog
-        name: Get version changelog
-        shell: bash
-        run: |
-          CHANGELOG=$(awk -v version="${VERSION}" '
-            $0 ~ "^## \\[?" version "\\]?([[:space:]]+-|$)" { found=1; next }
-            found && /^## / { exit }
-            found { print }
-          ' CHANGELOG.md)
-
-          if [[ -z "${CHANGELOG}" ]]; then
-            echo "No changelog section found for version ${VERSION}" >&2
-            exit 1
-          fi
-
-          {
-            echo 'changelog<<CHANGELOG_EOF'
-            echo "${CHANGELOG}"
-            echo 'CHANGELOG_EOF'
-          } >> "${GITHUB_OUTPUT}"
-
-      # Update GitHub release
-      - name: Create or update GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.VERSION }}
-          body: ${{ steps.get_changelog.outputs.changelog }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish --access public --registry=https://registry.npmjs.org/

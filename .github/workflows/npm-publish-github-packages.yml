@@ -1,56 +1,42 @@
-name: Node.js Package GitHub Mode
+name: Publish gaming-infos to GitHub Packages
 
 on:
   release:
-    types: 
-      - published
+    types: [published]
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
   packages: write
 
 jobs:
-  build:
-    runs-on: [self-hosted, Linux, docker, buildx]
+  github-packages:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: npm ci
-
-  publish-gpr:
-    needs: build
-    runs-on: [self-hosted, Linux, docker, buildx]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js for GitHub Packages
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
+          node-version: '24'
           registry-url: https://npm.pkg.github.com/
-
-      - name: Install dependencies
-        run: npm ci
-
-      # Read version from package.json
-      - name: Read version from package.json
-        id: read_version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      # Publish package to GitHub Packages
-      - name: Publish to GitHub Packages
-        run: npm publish
+          scope: '@nekosuneprojectsnpm'
+      - name: Validate release version
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$RELEASE_TAG" = "v$VERSION" || { echo "::error::Release tag and package version disagree"; exit 1; }
+      - run: npm ci
+      - run: npm run check && npm test
+      - name: Adjust scope only for GitHub Packages
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const p = JSON.parse(fs.readFileSync('package.json','utf8'));
+          if (!p.name.startsWith('@nekosuneprojects/')) throw Error('Unexpected npmjs package name');
+          p.name = p.name.replace('@nekosuneprojects/','@nekosuneprojectsnpm/');
+          p.publishConfig = { ...p.publishConfig, registry: 'https://npm.pkg.github.com/' };
+          fs.writeFileSync('package.json', JSON.stringify(p,null,2)+'\n');
+          NODE
+      - name: Publish GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: npm publish --ignore-scripts --registry=https://npm.pkg.github.com/
