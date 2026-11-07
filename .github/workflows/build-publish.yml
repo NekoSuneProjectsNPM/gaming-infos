@@ -64,7 +64,7 @@ jobs:
         run: npm pack --dry-run --ignore-scripts
 
   npmjs:
-    if: github.event_name == 'workflow_dispatch' && (inputs.registry == 'both' || inputs.registry == 'npmjs')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && (inputs.registry == 'both' || inputs.registry == 'npmjs'))
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -92,15 +92,20 @@ jobs:
           NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
           if npm view "${NAME}@${VERSION}" version --registry=https://registry.npmjs.org/ --prefer-online >/dev/null 2>&1; then
-            echo "::error::${NAME}@${VERSION} is already published on npmjs. Bump package version before the next publication."
-            exit 1
+            echo "::notice::${NAME}@${VERSION} already exists on npmjs; skipping immutable version."
+            exit 0
+          fi
+          # Push events have no workflow_dispatch inputs. Prefer a configured token;
+          # otherwise use npm Trusted Publishing (OIDC), which needs npmjs setup.
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            if [ -n "$NPM_TOKEN" ]; then NPM_AUTH_METHOD=token; else NPM_AUTH_METHOD=trusted; fi
           fi
           if [ "$NPM_AUTH_METHOD" = "trusted" ]; then
             unset NODE_AUTH_TOKEN NPM_TOKEN
             npm publish --access public --registry=https://registry.npmjs.org/
           else
             if [ -z "$NPM_TOKEN" ]; then
-              echo "::error::Configure the npm_token repository secret or choose trusted after setting up the npm Trusted Publisher."
+              echo "::error::Configure npm_token or set up npm Trusted Publishing for build-publish.yml."
               exit 1
             fi
             export NODE_AUTH_TOKEN="$NPM_TOKEN"
@@ -108,7 +113,7 @@ jobs:
           fi
 
   github-packages:
-    if: github.event_name == 'workflow_dispatch' && (inputs.registry == 'both' || inputs.registry == 'github')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && (inputs.registry == 'both' || inputs.registry == 'github'))
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -137,6 +142,15 @@ jobs:
           fs.writeFileSync('package.json', JSON.stringify(p, null, 2) + '\n');
           NODE
       - name: Publish to GitHub Packages
+        shell: bash
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish --ignore-scripts --registry=https://npm.pkg.github.com/
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "${NAME}@${VERSION}" version --registry=https://npm.pkg.github.com/ --prefer-online >/dev/null 2>&1; then
+            echo "::notice::${NAME}@${VERSION} already exists in GitHub Packages; skipping immutable version."
+            exit 0
+          fi
+          npm publish --ignore-scripts --registry=https://npm.pkg.github.com/

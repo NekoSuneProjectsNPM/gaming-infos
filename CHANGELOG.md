@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- Corrected the publishing workflow so successful `main` push builds can publish to npmjs and GitHub Packages; previously both registry jobs were skipped because they required `workflow_dispatch`.
+- Added a published-version check to skip existing versions instead of reattempting immutable releases.
+- Preserved manual registry selection and npm token/Trusted Publisher authentication.
+
+### Fixed
 - Fixed npm installation error E404 by aligning the VRChat dependency and lockfile with the published `@nekosuneprojects/vrchat-api@1.0.0` release. The unreleased `1.0.1` tarball was previously referenced incorrectly.
 
 ## 3.0.1 - 2026-11-07

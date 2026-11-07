@@ -17,7 +17,7 @@ npm install @nekosuneprojects/warframe-api@1.0.1
 npm install @nekosuneprojects/vrchat-api@1.0.0
 ```
 
-Node.js 18+ is required. Ordinary pushes do not publish npm releases.
+Node.js 18+ is required. Pushes to `main` run build/tests and attempt to publish the package to npmjs and GitHub Packages when the exact version is not already available. Pull requests build/test only.
 
 ## Warframe
 
@@ -99,4 +99,4 @@ The 2.x `gaming-infos` API-first caches, embedded JSON catalogs, `gamecodes`, an
 
 ## Publishing
 
-The source version is `3.0.1`; package publication is manual through GitHub Actions. Before publishing, confirm both exact dependency versions exist on npmjs.org, run `npm ci`, `npm run check`, `npm test`, and `npm pack --dry-run`. The consolidated `Build and publish gaming-infos` workflow runs build/tests on main pushes and pull requests. To publish, use **Run workflow** on `main` and select `registry=both`, `npmjs`, or `github`. For npmjs select `npm_auth=token` (requires secret `npm_token`) or `npm_auth=trusted` (requires a Trusted Publisher configured for repository `NekoSuneProjectsNPM/gaming-infos`, workflow `build-publish.yml`). Publishing is never triggered by an ordinary push. GitHub Packages uses the `@nekosuneprojectsnpm/gaming-infos` scope.
+The source version is `3.0.1`; package publication is manual through GitHub Actions. Before publishing, confirm both exact dependency versions exist on npmjs.org, run `npm ci`, `npm run check`, `npm test`, and `npm pack --dry-run`. The consolidated `Build and publish gaming-infos` workflow builds/tests on every `main` push and pull request. After a successful build on `main`, it also attempts **both** registry publications, skipping any version already published. The manual **Run workflow** action still supports `registry=both`, `npmjs`, or `github`. On automatic pushes, npmjs uses repository secret `npm_token` when set, otherwise npm Trusted Publisher OIDC (which must be configured for repository `NekoSuneProjectsNPM/gaming-infos`, workflow `build-publish.yml`). Manual dispatch uses the selected `npm_auth` setting. GitHub Packages publishes as `@nekosuneprojectsnpm/gaming-infos`. Each new npm release still requires incrementing the package version in both package files.
