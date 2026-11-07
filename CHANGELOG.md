@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixed
+- Fixed npmjs publishing from automatic GitHub Actions runs to use Trusted Publisher OIDC instead of selecting an npm token that was rejected with `EOTP` (interactive two-factor authentication required).
+- Clarified the required npmjs Trusted Publisher configuration for `NekoSuneProjectsNPM/gaming-infos` and workflow `build-publish.yml`.
+
+### Fixed
 - Corrected the publishing workflow so successful `main` push builds can publish to npmjs and GitHub Packages; previously both registry jobs were skipped because they required `workflow_dispatch`.
 - Added a published-version check to skip existing versions instead of reattempting immutable releases.
 - Preserved manual registry selection and npm token/Trusted Publisher authentication.

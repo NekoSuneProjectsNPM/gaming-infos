@@ -78,14 +78,15 @@ jobs:
         with:
           node-version: '24'
           registry-url: https://registry.npmjs.org/
+          package-manager-cache: false
       - name: Ensure npm Trusted Publishing CLI support
         run: npm install --global npm@^11.5.1
       - name: Install dependencies
         run: npm ci --ignore-scripts
-      - name: Publish exact version to npmjs
+      - name: Publish exact version to npmjs with Trusted Publishing (OIDC)
         shell: bash
         env:
-          NPM_AUTH_METHOD: ${{ inputs.npm_auth }}
+          NPM_AUTH_METHOD: ${{ github.event_name == 'workflow_dispatch' && inputs.npm_auth || 'trusted' }}
           NPM_TOKEN: ${{ secrets.npm_token }}
         run: |
           set -euo pipefail
@@ -95,17 +96,19 @@ jobs:
             echo "::notice::${NAME}@${VERSION} already exists on npmjs; skipping immutable version."
             exit 0
           fi
-          # Push events have no workflow_dispatch inputs. Prefer a configured token;
-          # otherwise use npm Trusted Publishing (OIDC), which needs npmjs setup.
+          # On pushes, always publish via OIDC: token-based publishing needs
+          # an interactive OTP for this npm account.
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            if [ -n "$NPM_TOKEN" ]; then NPM_AUTH_METHOD=token; else NPM_AUTH_METHOD=trusted; fi
+            NPM_AUTH_METHOD=trusted
           fi
           if [ "$NPM_AUTH_METHOD" = "trusted" ]; then
             unset NODE_AUTH_TOKEN NPM_TOKEN
+            # This needs an npm Trusted Publisher matching this repo and
+            # build-publish.yml, with direct npm publish permitted.
             npm publish --access public --registry=https://registry.npmjs.org/
           else
             if [ -z "$NPM_TOKEN" ]; then
-              echo "::error::Configure npm_token or set up npm Trusted Publishing for build-publish.yml."
+              echo "::error::Missing npm_token. Prefer trusted authentication and configure the npm Trusted Publisher."
               exit 1
             fi
             export NODE_AUTH_TOKEN="$NPM_TOKEN"
