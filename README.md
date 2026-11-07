@@ -2,7 +2,7 @@
 
 Modular multi-game information toolkit for Node.js 18+. **Version 3.0.1 continues the clean-break 3.x rebuild** of the old monolithic data-mirror package, using independent npm packages for each game. The previous embedded datasets, API cache syncs and legacy add-on implementation have been removed.
 
-The rebuilt package now includes **Warframe and VRChat**, backed by `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.1` respectively. Additional games can be added later without reintroducing the old monolithic cache.
+The rebuilt package now includes **Warframe and VRChat**, backed by `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.0` respectively. Additional games can be added later without reintroducing the old monolithic cache.
 
 ## Installation
 
@@ -14,7 +14,7 @@ To use an individual game package directly:
 
 ```bash
 npm install @nekosuneprojects/warframe-api@1.0.1
-npm install @nekosuneprojects/vrchat-api@1.0.1
+npm install @nekosuneprojects/vrchat-api@1.0.0
 ```
 
 Node.js 18+ is required. Ordinary pushes do not publish npm releases.

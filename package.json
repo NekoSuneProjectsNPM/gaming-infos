@@ -39,7 +39,7 @@
   "license": "MIT",
   "dependencies": {
     "@nekosuneprojects/warframe-api": "1.0.1",
-    "@nekosuneprojects/vrchat-api": "1.0.1"
+    "@nekosuneprojects/vrchat-api": "1.0.0"
   },
   "files": [
     "index.js",
