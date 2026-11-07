@@ -1,20 +1,35 @@
 # @nekosuneprojects/gaming-infos
 
-Modular multi-game information toolkit for Node.js 18+. **Version 3.0.2 continues the clean-break 3.x rebuild** of the old monolithic data-mirror package, using independent npm packages for each game. The previous embedded datasets, API cache syncs and legacy add-on implementation have been removed.
+**Modular game information SDK for Node.js 18+.** The upcoming `3.0.2` release brings together **8 independent game packages** in one consistent provider registry, while keeping game-specific data, APIs and optional network requests within their own modules.
 
-The rebuilt package now includes **eight standalone providers** (Warframe, VRChat, Genshin Impact, Honkai: Star Rail, Zenless Zone Zero, Arknights: Endfield, Neverness to Everness and Wuthering Waves), backed by `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.0`, plus six exact `@nekosuneprojects/*-api@1.0.0` game dependencies. Additional games can be added later without reintroducing the old monolithic cache.
+> **PR #1 release status:** This documentation describes the **draft** `3.0.2` branch. It has not been merged or published as a new `gaming-infos` release. The last PR build passed all dependency-installation, static-check, unit-test and package-validation steps.
+
+## Supported games
+
+| Game | Provider ID | Standalone dependency | Convenience factory | Optional live features |
+| --- | --- | --- | --- | --- |
+| Warframe | `warframe` | `@nekosuneprojects/warframe-api@1.0.1` | `createWarframe()` | Warframe public world-state data |
+| VRChat | `vrchat` | `@nekosuneprojects/vrchat-api@1.0.0` | `createVRChat()` | Public worlds, groups and avatar search |
+| Genshin Impact | `genshinimpact` | `@nekosuneprojects/genshinimpact-api@1.0.0` | `createGenshinImpact()` | Enka.Network public UID showcase |
+| Honkai: Star Rail | `honkaistarrail` | `@nekosuneprojects/honkaistarrail-api@1.0.0` | `createHonkaiStarRail()` | Enka.Network public UID showcase |
+| Zenless Zone Zero | `zenlesszonezero` | `@nekosuneprojects/zenlesszonezero-api@1.0.0` | `createZenlessZoneZero()` | Enka.Network public UID showcase |
+| Arknights: Endfield | `arknightsendfield` | `@nekosuneprojects/arknightsendfield-api@1.0.0` | `createArknightsEndfield()` | Enka.Network public UID business card |
+| Neverness to Everness | `nte` | `@nekosuneprojects/nte-api@1.0.0` | `createNTE()` | Optional GitHub JSON synchronisation |
+| Wuthering Waves | `wutheringwaves` | `@nekosuneprojects/wutheringwaves-api@1.0.0` | `createWutheringWaves()` | Optional GitHub JSON synchronisation |
+
+Each provider exposes its own methods and bundled data. **The aggregator does not copy game catalogs into a single combined JSON archive.**
 
 ## Installation
 
+Install the consolidated package **after version 3.0.2 is released**:
+
 ```bash
-npm install @nekosuneprojects/gaming-infos
+npm install @nekosuneprojects/gaming-infos@3.0.2
 ```
 
-To use an individual game package directly:
+For PR development, check out `feat/genshinimpact-api` and use `npm ci`. Alternatively, individual packages can be installed without `gaming-infos`:
 
 ```bash
-npm install @nekosuneprojects/warframe-api@1.0.1
-npm install @nekosuneprojects/vrchat-api@1.0.0
 npm install @nekosuneprojects/genshinimpact-api@1.0.0
 npm install @nekosuneprojects/honkaistarrail-api@1.0.0
 npm install @nekosuneprojects/zenlesszonezero-api@1.0.0
@@ -23,160 +38,171 @@ npm install @nekosuneprojects/nte-api@1.0.0
 npm install @nekosuneprojects/wutheringwaves-api@1.0.0
 ```
 
-Node.js 18+ is required. Pushes to `main` run build/tests and attempt to publish the package to npmjs and GitHub Packages when the exact version is not already available. Pull requests build/test only.
+`gaming-infos` also depends on `@nekosuneprojects/warframe-api@1.0.1` and `@nekosuneprojects/vrchat-api@1.0.0`.
 
-## Warframe
-
-```js
-const gaming = require('@nekosuneprojects/gaming-infos');
-
-const warframe = gaming.createClient('warframe', { platform: 'pc', language: 'en' });
-const about = await warframe.About(); 
-const matches = await warframe.search('Ash');
-const codes = await warframe.codes.active({ hasCode: true });
-const alerts = await warframe.api.alerts();
-console.log(about.name, matches.total, codes.length, alerts.length);
-```
-
-## VRChat
+## Quick start: all 8 providers
 
 ```js
 const gaming = require('@nekosuneprojects/gaming-infos');
 
-// Local-first bundled VRChat JSON, no VRChat login needed:
-const vrchat = gaming.createClient('vrchat', {
-  cacheDir: './storage/vrchat'
-});
-const game = await vrchat.About();
-const localWorld = await vrchat.world('theblackcat');
-const localGroups = await vrchat.groups.search('club');
+console.log(gaming.listProviders());
+// ['warframe', 'vrchat', 'genshinimpact', 'honkaistarrail',
+//  'zenlesszonezero', 'arknightsendfield', 'nte', 'wutheringwaves']
 
-// Live online NekoSune APIs:
-const worlds = await vrchat.worlds.browse({sort:'popular',page:1});
-const foundWorlds = await vrchat.worlds.searchOnline('Mirror',{platform:'pc'});
-const groups = await vrchat.groups.searchOnline('Dance',{page:1});
+// Game data for the 6 character-based providers:
+for (const id of ['genshinimpact', 'honkaistarrail', 'zenlesszonezero',
+                  'arknightsendfield', 'nte', 'wutheringwaves']) {
+  const api = gaming.createClient(id);
+  const game = await api.About();
+  const characters = await api.characters.list();
+  const codes = await api.codes.snapshot();
+  console.log(game.name, characters.length, codes.Active.length);
+}
 
-// Public third-party avatar-search providers (availability varies):
-const avatars = await vrchat.avatars.searchOnline('Rindo');
-
-console.log(game.name, localWorld.name, localGroups.total);
-console.log(worlds.meta, foundWorlds.meta, groups.meta, avatars.successful);
+// Shortcut equivalent:
+const zzz = gaming.createZenlessZoneZero();
+const ellen = await zzz.character('Ellen Joe');
+console.log(ellen.name);
 ```
 
-The `vrchat-api` provider bundles local JSON for worlds, groups, players and game metadata; online methods make on-demand HTTP calls. It does **not** fetch private VRChat account data or bypass authentication. The upstream JSON currently contains no local avatar catalog, so `avatars.searchOnline` uses external providers.
+`createClient(game, options)` is case-insensitive for provider IDs (for example, `createClient('WARFRAME')`). Unknown game IDs raise a `RangeError`.
 
-### World browsing
+## Per-game examples
 
-The online world browser supports `updated`, `newest`, `oldest` and `popular`, using the remote API's 24-world pagination:
+### Genshin Impact
+
+```js
+const { createGenshinImpact } = require('@nekosuneprojects/gaming-infos');
+const genshin = createGenshinImpact();
+const amber = await genshin.character('amber');
+const archive = await genshin.codes.snapshot();
+
+// Optional public Enka.Network profile, only fetched when called:
+// const profile = await genshin.enka.player('123456789');
+console.log(amber.name, archive.Expired.length);
+```
+
+### Honkai: Star Rail
+
+```js
+const { createHonkaiStarRail } = require('@nekosuneprojects/gaming-infos');
+const hsr = createHonkaiStarRail();
+const game = await hsr.About();
+const characters = await hsr.characters.list();
+const candidates = await hsr.codes.unknown();
+// Optional: await hsr.enka.player('601499975');
+console.log(game.name, characters.length, candidates.length);
+```
+
+### Zenless Zone Zero
+
+```js
+const { createZenlessZoneZero } = require('@nekosuneprojects/gaming-infos');
+const zzz = createZenlessZoneZero();
+const agents = await zzz.characters.list();
+const codes = await zzz.codes.candidates();
+// Optional: await zzz.enka.player('1300528351');
+console.log(agents.length, codes.length);
+```
+
+### Arknights: Endfield
+
+```js
+const { createArknightsEndfield } = require('@nekosuneprojects/gaming-infos');
+const endfield = createArknightsEndfield();
+const akekuri = await endfield.character('Akekuri');
+const candidateCodes = await endfield.codes.candidates();
+// Optional: await endfield.enka.businessCard('6976332004');
+console.log(akekuri.name, candidateCodes.length);
+```
+
+### Neverness to Everness (NTE)
+
+```js
+const { createNTE } = require('@nekosuneprojects/gaming-infos');
+const nte = createNTE();
+const blackbird = await nte.character('Blackbird');
+const reports = await nte.codes.reported(); // Community reports, not confirmed redemptions
+console.log(blackbird.name, reports.length);
+```
+
+### Wuthering Waves
+
+```js
+const { createWutheringWaves } = require('@nekosuneprojects/gaming-infos');
+const wuwa = createWutheringWaves();
+const hsin = await wuwa.character('Hsin');
+const candidates = await wuwa.codes.candidates(); // Date-aware source statuses
+console.log(hsin.name, candidates.length);
+```
+
+### Warframe
+
+```js
+const { createWarframe } = require('@nekosuneprojects/gaming-infos');
+const warframe = createWarframe({ platform: 'pc', language: 'en' });
+const ash = await warframe.search('Ash');
+const alerts = await warframe.api.alerts(); // Live public data
+console.log(ash.total, alerts.length);
+```
+
+### VRChat
 
 ```js
 const { createVRChat } = require('@nekosuneprojects/gaming-infos');
-const vrchat = createVRChat();
-const page2 = await vrchat.worlds.browse({sort:'updated',page:2});
-console.log(page2.data, page2.meta);
+const vrchat = createVRChat({ cacheDir: './storage/vrchat' });
+const localWorld = await vrchat.world('theblackcat');
+const worlds = await vrchat.worlds.browse({ sort: 'popular', page: 1 });
+const groups = await vrchat.groups.searchOnline('Dance', { page: 1 });
+const avatars = await vrchat.avatars.searchOnline('Rindo');
+console.log(localWorld.name, worlds.meta, groups.meta, avatars.successful);
 ```
 
-## Genshin Impact
+Live VRChat searches use public third-party services whose availability may vary. No private VRChat account information or login bypass is provided.
 
-The Genshin provider is an adapter for the standalone `@nekosuneprojects/genshinimpact-api@1.0.0` package. It keeps local JSON and redemption-code data separate from optional live Enka.Network requests.
+## Offline data, live API calls and code status
 
-```js
-const gaming = require('@nekosuneprojects/gaming-infos');
-const gi = gaming.createGenshinImpact();
+Character and game metadata are read from the standalone packages' local JSON by default. Each game SDK can optionally synchronise supported JSON from the `JsonData` branch of [NekoSuneProjectsNPM/game-tracker](https://github.com/NekoSuneProjectsNPM/game-tracker) using its explicit `data.sync()` and `codes.sync()` methods. Synchronisation is **not** automatic.
 
-// All of these work from bundled local JSON:
-const about = await gi.About();
-const amber = await gi.character('amber');
-const characters = await gi.characters.list();
-const archivedCodes = await gi.codes.snapshot();
-const unknownCodes = await gi.codes.unknown();
-console.log(about.name, amber.name, characters.length, archivedCodes.Expired.length);
+The bundled redemption-code groups `Active`, `Expired` and `Unknown` describe **source-record status**, not proof of successful account redemption. Codes may expire between package releases. Individual APIs provide additional filtering such as `codes.candidates()`, `codes.reported()` (NTE), and `codes.verifiedActive()` (where available). `verifiedActive()` returns an empty list in providers without genuine redemption verification.
 
-// Optional Enka.Network UID showcase (live request only when called):
-const uid = '123456789'; // Replace with a real UID
-const profile = await gi.enka.player(uid);
-console.log(profile.playerInfo.nickname);
-```
+The Genshin Impact, Honkai: Star Rail, Zenless Zone Zero and Arknights: Endfield providers support optional, read-only **Enka.Network** public UID lookups. Those lookups initiate network calls only when invoked; they do not access private inventory, authenticate into accounts or bypass hidden showcase settings. Observe third-party rate limits.
 
-Use `gaming.createClient('genshinimpact')` as an equivalent way to create a client. The local code archive has historical `Active`, `Expired` and `Unknown` categories; these are not real-time redemption guarantees. Enka is a third-party public profile service and obeys its rate limits. See [Genshin Impact API](https://www.npmjs.com/package/@nekosuneprojects/genshinimpact-api) for the standalone documentation.
+## Registry API
 
-## New standalone game providers
-
-All providers are separate npm dependencies, not data mirrors copied into `gaming-infos`. Normal local character/game/code reads use their bundled JSON. The optional Enka.Network provider makes live requests only when explicitly invoked.
-
-| Provider | Standalone exact dependency | Factory | Character catalog | Optional Enka |
-| --- | --- | --- | --- | --- |
-| Genshin Impact | `@nekosuneprojects/genshinimpact-api@1.0.0` | `createGenshinImpact()` | Characters | Genshin public UID |
-| Honkai: Star Rail | `@nekosuneprojects/honkaistarrail-api@1.0.0` | `createHonkaiStarRail()` | Characters | Public UID |
-| Zenless Zone Zero | `@nekosuneprojects/zenlesszonezero-api@1.0.0` | `createZenlessZoneZero()` | Agents | Public UID |
-| Arknights: Endfield | `@nekosuneprojects/arknightsendfield-api@1.0.0` | `createArknightsEndfield()` | Operators | Public UID |
-| Neverness to Everness | `@nekosuneprojects/nte-api@1.0.0` | `createNTE()` | Characters | — |
-| Wuthering Waves | `@nekosuneprojects/wutheringwaves-api@1.0.0` | `createWutheringWaves()` | Resonators | — |
-
-```js
-const gaming = require('@nekosuneprojects/gaming-infos');
-
-// Identical createClient() API for every game:
-for (const id of ['genshinimpact', 'honkaistarrail', 'zenlesszonezero',
-                  'arknightsendfield', 'nte', 'wutheringwaves']) {
-  const game = gaming.createClient(id);
-  console.log((await game.About()).name, (await game.characters.list()).length);
-  console.log((await game.codes.snapshot()).Active.length);
-}
-
-// Optional public Enka.Network UID (not accessed unless called):
-const starRail = gaming.createHonkaiStarRail();
-const zzz = gaming.createZenlessZoneZero();
-const endfield = gaming.createArknightsEndfield();
-console.log(typeof starRail.enka.player, typeof zzz.enka.player, typeof endfield.enka.player);
-```
-
-**Code status note:** `Active` in a bundled code snapshot is a historical or community-reported label, not proof that redemption currently succeeds. Use each provider's `codes.candidates()` or `codes.verifiedActive()` as documented, and check date-limited codes carefully.
-
-## Module layout
-
-- `index.js` — public entrypoint
-- `src/registry.js` — provider registry and selection
-- `src/providers/warframe.js` — Warframe npm adapter
-- `src/providers/vrchat.js` — VRChat npm adapter
-- `src/providers/genshinimpact.js` — Genshin Impact npm adapter
-- `src/providers/honkaistarrail.js` — Honkai: Star Rail npm adapter
-- `src/providers/zenlesszonezero.js` — Zenless Zone Zero npm adapter
-- `src/providers/arknightsendfield.js` — Arknights: Endfield npm adapter
-- `src/providers/nte.js` — Neverness to Everness npm adapter
-- `src/providers/wutheringwaves.js` — Wuthering Waves npm adapter
-- `test/registry.test.js` — provider smoke tests
-- `.github/workflows/build-publish.yml` — CI checks and publishing after merges to main
-
-## API surface
-
-| Export | Purpose |
+| Export | Description |
 | --- | --- |
-| `createClient(game, options)` | Instantiate the game provider |
-| `createWarframe(options)` | Shortcut to the Warframe provider |
-| `createVRChat(options)` | Shortcut to the VRChat provider |
-| `createGenshinImpact(options)` | Shortcut to the Genshin Impact provider |
-| `createHonkaiStarRail(options)` | Shortcut to the Honkai: Star Rail provider |
-| `createZenlessZoneZero(options)` | Shortcut to the Zenless Zone Zero provider |
-| `createArknightsEndfield(options)` | Shortcut to the Arknights: Endfield provider |
-| `createNTE(options)` | Shortcut to the Neverness to Everness provider |
-| `createWutheringWaves(options)` | Shortcut to the Wuthering Waves provider |
-| `listProviders()` | List installed game IDs |
-| `providers.warframe` | Warframe provider adapter |
-| `providers.vrchat` | VRChat provider adapter |
-| `providers.genshinimpact` | Genshin Impact provider adapter |
-| `providers.honkaistarrail` | Honkai: Star Rail provider adapter |
-| `providers.zenlesszonezero` | Zenless Zone Zero provider adapter |
-| `providers.arknightsendfield` | Arknights: Endfield provider adapter |
-| `providers.nte` | Neverness to Everness provider adapter |
-| `providers.wutheringwaves` | Wuthering Waves provider adapter |
+| `createClient(id, options)` | Create a provider by registered game ID |
+| `listProviders()` | List all eight provider IDs |
+| `providers` | Frozen mapping of all provider adapters |
+| `createWarframe(options)` | Warframe |
+| `createVRChat(options)` | VRChat |
+| `createGenshinImpact(options)` | Genshin Impact |
+| `createHonkaiStarRail(options)` | Honkai: Star Rail |
+| `createZenlessZoneZero(options)` | Zenless Zone Zero |
+| `createArknightsEndfield(options)` | Arknights: Endfield |
+| `createNTE(options)` | Neverness to Everness |
+| `createWutheringWaves(options)` | Wuthering Waves |
 
-Read the standalone packages' documentation for complete features: [Warframe API](https://www.npmjs.com/package/@nekosuneprojects/warframe-api) [VRChat API](https://www.npmjs.com/package/@nekosuneprojects/vrchat-api), and [Genshin Impact API](https://www.npmjs.com/package/@nekosuneprojects/genshinimpact-api).
+Adapter files live in `src/providers/<id>.js`, registration is in `src/registry.js`, and public exports are in `index.js`. `test/registry.test.js` exercises each adapter with local data and checks that no live network call is required for local reads.
 
-## Migration from 2.x
+## Migrating from 2.x
 
-The 2.x `gaming-infos` API-first caches, embedded JSON catalogs, `gamecodes`, and sync scripts are **not available** in 3.0.0. Previous consumers must migrate explicitly. Old releases remain accessible through Git history and npm.
+Version 3.x replaces the original monolithic API-first mirror and cached catalogs with standalone npm providers. Removed legacy functions such as `Game()`, `Characters()`, `GameCodes()`, `List()`, the old `gamecodes` convenience API, and the combined cache sync tasks are **not available** through the new registry. Switch to `createClient(game)`, then use that provider's documented methods.
 
-## Publishing
+## Development, CI and publishing
 
-This PR prepares source version `3.0.2`. Creating this branch and pull request does not publish it; after review and merge into `main`, the configured build workflow attempts publication only if the exact version has not already been published. Before publishing, confirm all eight exact dependency versions exist on npmjs.org, run `npm ci`, `npm run check`, `npm test`, and `npm pack --dry-run`. The consolidated `Build and publish gaming-infos` workflow builds/tests on every `main` push and pull request. After a successful build on `main`, it also attempts **both** registry publications, skipping any version already published. The manual **Run workflow** action still supports `registry=both`, `npmjs`, or `github`. On automatic pushes, npmjs uses **Trusted Publisher OIDC only**, not the existing `npm_token` (which caused EOTP). Configure npm's Trusted Publisher for the exact `NekoSuneProjectsNPM/gaming-infos` repository and `build-publish.yml` workflow, and enable direct `npm publish`. Manual dispatch still permits a token if it is eligible to publish without an interactive OTP (which must be configured for repository `NekoSuneProjectsNPM/gaming-infos`, workflow `build-publish.yml`). Manual dispatch uses the selected `npm_auth` setting. GitHub Packages publishes as `@nekosuneprojectsnpm/gaming-infos`. Each new npm release still requires incrementing the package version in both package files.
+```bash
+npm ci --ignore-scripts
+npm run check
+npm test
+npm pack --dry-run --ignore-scripts
+```
+
+The PR workflow validates dependencies, static syntax, provider smoke tests and packaging; the latest PR build succeeded. Pull requests **never publish**. Only after merging into `main` does `.github/workflows/build-publish.yml` attempt npmjs and GitHub Packages releases of an unpublished version; manual workflow dispatch also supports selecting a registry. Publishing to npmjs automatically requires the corresponding **npm Trusted Publisher (OIDC)** configuration, and GitHub Packages publishes under `@nekosuneprojectsnpm/gaming-infos`. Confirm all exact package versions are available and regenerate the npm lockfile with integrity hashes before release where possible.
+
+**PR #1 remains a draft. Nothing in this README change merges or publishes the package.**
+
+## Standalone documentation
+
+See the per-package README files in the [game-tracker GitHub repository](https://github.com/NekoSuneProjectsNPM/game-tracker) under the corresponding `*-api` branches for full character schemas, redemption-code limitations and live API options.
